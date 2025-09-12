@@ -1,14 +1,8 @@
-import multer from 'multer';
-import path from 'path';
+import multer from "multer";
 
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
-  },
-});
+// Use memoryStorage so files are kept in RAM, not written to disk
+const storage = multer.memoryStorage();
 
 const upload = multer({ storage });
+
 export default upload;

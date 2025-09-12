@@ -1,22 +1,21 @@
 import pdf from 'pdf-parse';
 import mammoth from 'mammoth';
-import { readFile, access } from 'fs/promises';
-import path from 'path';
 import Tesseract from 'tesseract.js';
 
-export async function extractTextFromPDF(filePath) {
-  const buffer = await readFile(path.resolve(filePath));
+// ✅ PDF extractor: now takes a Buffer directly
+export async function extractTextFromPDF(buffer) {
   const data = await pdf(buffer);
   return data.text;
 }
 
-export async function extractTextFromDocx(filePath) {
-  const buffer = await readFile(path.resolve(filePath));
+// ✅ DOCX extractor: now takes a Buffer directly
+export async function extractTextFromDocx(buffer) {
   const result = await mammoth.extractRawText({ buffer });
   return result.value;
 }
 
-export async function extractTextFromImage(filePath) {
-  const result = await Tesseract.recognize(filePath, 'eng');
+// ✅ Image extractor: Tesseract accepts Buffer too
+export async function extractTextFromImage(buffer) {
+  const result = await Tesseract.recognize(buffer, 'eng');
   return result.data.text;
 }
