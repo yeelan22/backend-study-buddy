@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 import { generateMemoryData } from '../utils/llm.js';
 import upload from '../middleware/upload.js';
-import { extractTextFromPDF, extractTextFromDocx, extractTextFromImage } from '../utils/analyzeFile.js';
+import { extractTextFromPDF, extractTextFromDocx, extractTextFromImage } from '../utils/extractFile.js';
 import Note from '../models/note.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -17,7 +17,6 @@ router.post('/', authenticate, upload.single('note'), async (req, res) => {
       return res.status(400).json({ error: 'No file or user ID' });
     }
 
-    // ✅ Use buffer directly (no file.path anymore)
     const buffer = file.buffer;
     const hash = crypto.createHash('md5').update(buffer).digest('hex');
 
@@ -30,25 +29,22 @@ router.post('/', authenticate, upload.single('note'), async (req, res) => {
       });
     }
 
-    const mimetype = file.mimetype;
     let extractedText = '';
+    const mimetype = file.mimetype;
 
     if (mimetype === 'application/pdf') {
-      extractedText = await extractTextFromPDF(buffer); // ✅ pass buffer
+      extractedText = await extractTextFromPDF(buffer, file.originalname);
     } else if (
       mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ) {
-      extractedText = await extractTextFromDocx(buffer); // ✅ pass buffer
+      extractedText = await extractTextFromDocx(buffer);
     } else if (mimetype.startsWith('image/')) {
-      extractedText = await extractTextFromImage(buffer); // ✅ pass buffer
+      extractedText = await extractTextFromImage(buffer);
     } else {
       return res.status(400).json({ error: 'Unsupported file type' });
     }
 
-    // Generate Q&A, category, title
-    let category = '';
-    let title = '';
-    let qa = [];
+    let category = '', title = '', qa = [];
     try {
       console.log('📝 Extracted text for LLM:', extractedText.slice(0, 300));
       const memoryData = await generateMemoryData(extractedText);
@@ -63,7 +59,6 @@ router.post('/', authenticate, upload.single('note'), async (req, res) => {
     const note = await Note.create({
       filename: file.originalname,
       filetype: mimetype,
-      // filepath removed 🚫 (no disk file in Vercel)
       extractedText,
       hash,
       userId,
@@ -74,7 +69,6 @@ router.post('/', authenticate, upload.single('note'), async (req, res) => {
     });
 
     console.log('✅ Note saved:', note);
-
     res.json(note);
   } catch (err) {
     console.error('❌ Upload error:', err);
