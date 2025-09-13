@@ -4,13 +4,13 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 
 // ✅ updated paths (now pointing back to server/routes)
-import chatRoutes from "../server/routes/chat.js";
-import authRoutes from "../server/routes/auth.js";
-import uploadRoute from "../server/routes/upload.js";
-import notesRoutes from "../server/routes/notes.js";
-import ragRoutes from "../server/routes/rag.js";
-import mindmapRoutes from "../server/routes/mindmap.js";
-import askaiRoutes from "../server/routes/askai.js";
+import chatRoutes from "../routes/chat.js";
+import authRoutes from "../routes/auth.js";
+import uploadRoute from "../routes/upload.js";
+import notesRoutes from "../routes/notes.js";
+import ragRoutes from "../routes/rag.js";
+import mindmapRoutes from "../routes/mindmap.js";
+import askaiRoutes from "../routes/askai.js";
 
 dotenv.config();
 const app = express();
