@@ -16,7 +16,7 @@ const app = express();
 
 // Explicit CORS setup
 const allowedOrigins = [
-  "https://study-buddy-mjfk54n33-yeelans-projects.vercel.app", // your frontend on vercel
+  'https://study-buddy-mpt8en9vq-yeelans-projects.vercel.app/', // your frontend on vercel
   "http://localhost:5173" // for local dev
 ];
 
