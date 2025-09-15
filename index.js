@@ -16,7 +16,7 @@ const app = express();
 
 // Explicit CORS setup
 const allowedOrigins = [
-  'https://study-buddy-mpt8en9vq-yeelans-projects.vercel.app/', // your frontend on vercel
+  'https://study-buddy-mpt8en9vq-yeelans-projects.vercel.app', // your frontend on vercel
   "http://localhost:5173" // for local dev
 ];
 
@@ -28,8 +28,11 @@ app.use(cors({
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true, // if you use cookies/auth headers
+  credentials: true, // needed for cookies / auth headers
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // allow all needed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // allow headers your frontend uses
 }));
+
 app.use(express.json());
 
 // Routes
