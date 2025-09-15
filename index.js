@@ -14,7 +14,12 @@ import askaiRoutes from "./routes/askai.js";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://study-buddy-bay.vercel.app/"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Routes
