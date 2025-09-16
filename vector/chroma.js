@@ -1,6 +1,6 @@
 import { ChromaClient } from 'chromadb';
 
-const client = new ChromaClient({ path: 'http://localhost:8000' });
+const client = new ChromaClient({ path: process.env.CHROMA_URL || 'http://localhost:8000' });
 
 // Dummy embedding function to satisfy Chroma interface
 const dummyEmbeddingFunction = {
