@@ -1,4 +1,3 @@
-// index.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -22,15 +21,18 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log("🌍 Incoming request origin:", origin); // debug log
     if (!origin || allowedOrigins.includes(origin)) {
+      console.log("✅ CORS allowed for:", origin);
       callback(null, true);
     } else {
+      console.warn("❌ CORS rejected for:", origin);
       callback(new Error("Not allowed by CORS"));
     }
   },
-  credentials: true, // needed for cookies / auth headers
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // allow all needed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // allow headers your frontend uses
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json());
@@ -48,14 +50,14 @@ app.use("/api/askai", askaiRoutes);
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log("MongoDB connected");
+    console.log("✅ MongoDB connected");
 
-    const PORT = process.env.PORT || 5000; // Railway provides process.env.PORT in production
+    const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`🚀 Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1); // Exit if DB connection fails
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
   });
