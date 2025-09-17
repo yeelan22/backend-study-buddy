@@ -2,10 +2,17 @@ import { ChromaClient } from "chromadb";
 
 console.log("🔧 Loading Chroma client...");
 
-const chromaUrl = process.env.CHROMA_URL || "http://localhost:8000";
+const chromaUrl =
+  process.env.CHROMA_URL || "http://localhost:8000";
 console.log("🌍 CHROMA_URL resolved to:", chromaUrl);
 
-const client = new ChromaClient({ path: chromaUrl });
+// Parse into host/port/ssl
+const url = new URL(chromaUrl);
+const client = new ChromaClient({
+  host: url.hostname,
+  port: url.port || (url.protocol === "https:" ? "443" : "80"),
+  ssl: url.protocol === "https:",
+});
 
 // Optional: quick connectivity test
 (async () => {
@@ -40,7 +47,9 @@ export const getUserCollection = async (userId) => {
 
     if (match) {
       try {
-        console.log(`✅ Found existing collection: ${collectionName}, fetching...`);
+        console.log(
+          `✅ Found existing collection: ${collectionName}, fetching...`
+        );
         const col = await client.getCollection({ name: collectionName });
         col.embeddingFunction = dummyEmbeddingFunction;
         console.log(`📁 Collection ready: ${collectionName}`);
