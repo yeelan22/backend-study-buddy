@@ -19,7 +19,7 @@ export async function extractTextFromImage(buffer) {
 // PDF extraction via Python service
 export async function extractTextFromPDF(buffer, filename = "file.pdf") {
   const formData = new FormData();
-  formData.append("file", new Blob([buffer]), filename);
+  formData.append("file", new Blob([buffer], { type: "application/pdf" }), filename);
 
   const headers = formData.getHeaders ? formData.getHeaders() : { "Content-Type": "multipart/form-data" };
 
@@ -34,3 +34,4 @@ export async function extractTextFromPDF(buffer, filename = "file.pdf") {
 
   return response.data.text;
 }
+
