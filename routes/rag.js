@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { queryNotesForRAG } from '../utils/embedAndStore.js'; // updated import
+import { queryNotesForRAG } from '../utils/EmbedAndStore.js'; // updated import
 import Chat from '../models/chat.js';
 
 const router = express.Router();
