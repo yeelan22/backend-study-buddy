@@ -14,12 +14,13 @@ export const LEVEL_COLORS = [
 
 export async function generateMemoryData(text) {
   try {
-    const systemPrompt = `You are a memory coach. Based on the given note content, do three things:
+    const systemPrompt = `You are a memory coach. Based on the note content:
 
-Categorize the note (single word or simple subject).
-Generate a concise 2-word title.
-Create 5–10 Q&A flashcards in JSON format.
-Reply with a JSON object like: { "category": "Philosophy", "title": "Moral Reasoning", "qa": [ { "question": "What is utilitarianism?", "answer": "A moral philosophy that advocates actions that maximize overall happiness." }, { "question": "...", "answer": "..." } ]}`;
+1. Categorize the note (single word or short subject) as "category".
+2. Generate a 2-word concise title as "title".
+3. Create 5–10 Q&A flashcards as an array "qa", each with "question" and "answer".
+
+⚠️ Only reply with a valid JSON object and no extra text.`;
 
     const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
       model: 'mistralai/mistral-7b-instruct',
@@ -35,20 +36,31 @@ Reply with a JSON object like: { "category": "Philosophy", "title": "Moral Reaso
     });
 
     const assistantReply = response.data.choices[0].message.content;
-    let parsed;
-    try {
-      parsed = JSON.parse(assistantReply);
-    } catch (e) {
-      const match = assistantReply.match(/\{[\s\S]*\}/);
-      if (match) {
-        parsed = JSON.parse(match[0]);
-      } else {
-        throw new Error('No valid JSON in LLM response');
+    
+    // Robust JSON extraction
+    function extractJSON(text) {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error("No JSON found in model output");
+      try {
+        return JSON.parse(match[0]);
+      } catch (err) {
+        const cleaned = match[0].replace(/\n/g, " ");
+        return JSON.parse(cleaned);
       }
     }
-    return parsed;
-  } catch (err) { throw new Error('AI processing failed'); }
+
+    return extractJSON(assistantReply);
+
+  } catch (err) {
+    console.error("LLM processing error:", err);
+    return {
+      category: "Uncategorized",
+      title: text.slice(0, 20),
+      qa: []
+    };
+  }
 }
+
 
 // --- Radial layout with level assignment ---
 function assignLevels(nodes, edges) {
