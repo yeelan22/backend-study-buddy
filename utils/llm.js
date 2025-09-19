@@ -2,14 +2,14 @@ import axios from "axios";
 
 // --- Soft color palette by level ---
 export const LEVEL_COLORS = [
-  { bg: "#ffe082", text: "#795548" }, // Level 0 (center)
-  { bg: "#b3e5fc", text: "#01579b" }, // Level 1
-  { bg: "#c8e6c9", text: "#2e7d32" }, // Level 2
-  { bg: "#f8bbd0", text: "#ad1457" }, // Level 3
-  { bg: "#d1c4e9", text: "#4527a0" }, // Level 4
-  { bg: "#fff9c4", text: "#fbc02d" }, // Level 5
-  { bg: "#e0e0e0", text: "#424242" }, // Level 6
-  { bg: "#ffccbc", text: "#bf360c" }, // Level 7
+  { bg: "#ffe082", text: "#795548" },
+  { bg: "#b3e5fc", text: "#01579b" },
+  { bg: "#c8e6c9", text: "#2e7d32" },
+  { bg: "#f8bbd0", text: "#ad1457" },
+  { bg: "#d1c4e9", text: "#4527a0" },
+  { bg: "#fff9c4", text: "#fbc02d" },
+  { bg: "#e0e0e0", text: "#424242" },
+  { bg: "#ffccbc", text: "#bf360c" },
 ];
 
 // --- Utility: Safe JSON extractor ---
@@ -31,50 +31,66 @@ function safeJSONParse(text, fallback = {}) {
 
 // --- Memory Data Generator ---
 export async function generateMemoryData(text) {
-  try {
-    const systemPrompt = `You are a memory coach. Based on the note content:
+  const fallback = {
+    category: "Uncategorized",
+    title: text.slice(0, 20) || "Untitled",
+    qa: [],
+  };
 
-1. Categorize the note (single word or short subject) as "category".
+  const prompt = `
+You are a memory coach. Based on the note content below:
+
+1. Categorize the note as "category".
 2. Generate a 2-word concise title as "title".
-3. Create 5–10 Q&A flashcards as an array "qa", each with "question" and "answer".
+3. Create 5–7 Q&A flashcards as an array "qa", each with "question" and "answer".
+4. Return ONLY a valid JSON object. No extra text.
 
-⚠️ Only reply with a valid JSON object and no extra text.`;
+Example format:
+{
+  "category": "Physics",
+  "title": "DC Motors",
+  "qa": [
+    {"question":"What is a DC motor?","answer":"A machine that converts DC electrical energy into mechanical energy."},
+    {"question":"Name main components of a DC motor.","answer":"Stator, Rotor, Commutator, Brushes, Shaft, Windings."}
+  ]
+}
 
+Note content:
+${text}
+`;
+
+  try {
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         model: "mistralai/mistral-7b-instruct",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: text },
-        ],
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0,
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           "Content-Type": "application/json",
         },
-        timeout: 30000, // 30s safety timeout
+        timeout: 60000,
       }
     );
 
     const assistantReply =
       response?.data?.choices?.[0]?.message?.content || "{}";
 
-    const parsed = safeJSONParse(assistantReply, {
-      category: "Uncategorized",
-      title: text.slice(0, 20) || "Untitled",
-      qa: [],
-    });
+    let parsed = safeJSONParse(assistantReply, fallback);
+
+    // Retry once if QA is empty
+    if (!Array.isArray(parsed.qa) || parsed.qa.length === 0) {
+      console.warn("⚠️ Empty QA detected, retrying LLM once...");
+      return generateMemoryData(text);
+    }
 
     return parsed;
   } catch (err) {
     console.error("❌ LLM processing error:", err.response?.data || err.message);
-    return {
-      category: "Uncategorized",
-      title: text.slice(0, 20) || "Untitled",
-      qa: [],
-    };
+    return fallback;
   }
 }
 
@@ -161,8 +177,13 @@ function classicRadialArrange(nodes, edges) {
 
 // --- Mind Map Generator ---
 export async function generateMindMapFromText(text) {
-  try {
-    const prompt = `
+  const fallback = {
+    nodes: [{ id: "1", label: text.slice(0, 20) || "Main Topic" }],
+    edges: [],
+    summary: "Auto-generated fallback mindmap",
+  };
+
+  const prompt = `
 You are a mind map generator for study notes.
 
 Rules:
@@ -171,20 +192,24 @@ Rules:
 - Sub-branches 3–4 levels max
 - Node labels = descriptive (5–15 words)
 - Edge labels = descriptive (5–10 words), avoid "is/has/type of"
-- Output ONLY JSON: 
+- Output ONLY JSON like this:
 {
  "summary": "Short summary",
- "nodes": [{ "id": "1", "label": "Main topic", "x": 500, "y": 350 }],
- "edges": [{ "id": "e1-2", "source": "1", "target": "2", "label": "Provides ..." }]
+ "nodes": [{"id":"1","label":"Main topic"}],
+ "edges": [{"id":"e1-2","source":"1","target":"2","label":"Provides ..."}]
 }
-Lesson Text: ${text}
+
+Lesson Text:
+${text}
 `;
 
+  try {
     const response = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         model: "mistralai/mistral-7b-instruct",
         messages: [{ role: "user", content: prompt }],
+        temperature: 0,
       },
       {
         headers: {
@@ -196,11 +221,12 @@ Lesson Text: ${text}
     );
 
     const reply = response?.data?.choices?.[0]?.message?.content || "{}";
-    let result = safeJSONParse(reply, { nodes: [], edges: [], summary: "" });
+    let result = safeJSONParse(reply, fallback);
 
-    if (!Array.isArray(result.nodes) || !Array.isArray(result.edges)) {
-      console.warn("⚠️ Mind map response incomplete, returning fallback");
-      result = { nodes: [], edges: [], summary: "" };
+    // Retry once if nodes are empty
+    if (!Array.isArray(result.nodes) || result.nodes.length === 0) {
+      console.warn("⚠️ Empty nodes detected, retrying mindmap LLM once...");
+      return generateMindMapFromText(text);
     }
 
     result.nodes = assignLevels(result.nodes, result.edges);
@@ -214,7 +240,10 @@ Lesson Text: ${text}
 
     return result;
   } catch (err) {
-    console.error("❌ Mind map generation error:", err.response?.data || err);
-    return { nodes: [], edges: [], summary: "Mind map generation failed" };
+    console.error(
+      "❌ Mind map generation error:",
+      err.response?.data || err.message
+    );
+    return fallback;
   }
 }
