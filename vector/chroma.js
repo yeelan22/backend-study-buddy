@@ -17,8 +17,11 @@ const client = new ChromaClient({
 (async () => {
   try {
     console.log("🔗 Testing Chroma connectivity...");
-    const res = await fetch(`${chromaUrl}/api/v2/collections`).then(r => r.json());
-    console.log("✅ Direct fetch to Chroma v2 succeeded:", res);
+    const raw = await fetch(`${chromaUrl}/api/v2/collections`);
+    const text = await raw.text();
+    console.log("📡 Raw response:", text);
+    const res = JSON.parse(text);
+    console.log("✅ Parsed response:", res);
   } catch (err) {
     console.error("❌ Direct fetch to Chroma failed:", err.message);
   }
