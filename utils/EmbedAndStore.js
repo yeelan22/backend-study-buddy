@@ -31,7 +31,7 @@ export async function processNoteForRAG(noteText, noteId, userId) {
       await collection.add({
         ids: [id],
         documents: [chunk],
-        embeddings: [embedding], // ✅ Explicitly storing embeddings
+        embeddings: [embedding], // ✅ Explicitly store embeddings
         metadatas: [{ userId, noteId, chunkIndex: i }],
       });
 
@@ -59,7 +59,7 @@ export async function queryNotesForRAG(queryText, userId, nResults = 5) {
     console.log(`🔍 Querying Chroma with: "${queryText}"`);
 
     const results = await collection.query({
-      queryEmbeddings: [queryEmbedding], // ✅ FIX: manual embeddings
+      queryEmbeddings: [queryEmbedding], // ✅ FIX: manual embeddings only
       nResults,
       include: ['documents', 'metadatas'],
     });
