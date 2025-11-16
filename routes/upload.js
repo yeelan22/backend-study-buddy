@@ -1,5 +1,6 @@
 import express from 'express';
 import crypto from 'crypto';
+import ImageKit from 'imagekit';
 
 import { generateMemoryData } from '../utils/llm.js';
 import upload from '../middleware/upload.js';

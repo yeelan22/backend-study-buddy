@@ -4,7 +4,6 @@ import Upload from '../models/upload.js';
 import { authenticate } from '../middleware/auth.js';
 import { generateMemoryData } from '../utils/llm.js'; 
 import { computeNextInterval } from '../utils/computeNextInterval.js';
-import note from '../models/note.js';
 const router = express.Router()
 
 router.post('/process', authenticate, async (req, res) => {
